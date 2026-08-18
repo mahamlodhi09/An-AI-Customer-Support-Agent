@@ -1,0 +1,198 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------
+   Design tokens
+   Dark theme = deep indigo-navy base, violet->blue signature
+   gradient used sparingly for interactive/active states.
+--------------------------------------------------------- */
+
+:root,
+[data-theme="dark"] {
+  --bg: #0f0c1d;
+  --bg-elevated: #14112a;
+  --surface: #1a1730;
+  --surface-hover: #221d3f;
+  --border: #2c2650;
+  --border-subtle: #221d3d;
+  --text-primary: #f3f0fc;
+  --text-secondary: #a79fc7;
+  --text-muted: #6f6790;
+
+  --accent-violet: #8b7cf6;
+  --accent-violet-dim: #4c3f99;
+  --accent-blue: #5ea8f5;
+  --accent-gradient: linear-gradient(135deg, #8b7cf6 0%, #5ea8f5 100%);
+  --accent-glow: 0 0 0 1px rgba(139, 124, 246, 0.4), 0 0 24px rgba(94, 168, 245, 0.25);
+
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --danger: #fb7185;
+  --danger-bg: rgba(251, 113, 133, 0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.12);
+  --neutral: #a79fc7;
+  --neutral-bg: rgba(167, 159, 199, 0.12);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #f6f4fc;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f4f1fb;
+  --border: #e3def3;
+  --border-subtle: #ece8f7;
+  --text-primary: #1c1830;
+  --text-secondary: #5b5478;
+  --text-muted: #8a83a8;
+
+  --accent-violet: #7c3aed;
+  --accent-violet-dim: #ddd0fb;
+  --accent-blue: #2563eb;
+  --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+  --accent-glow: 0 0 0 1px rgba(124, 58, 237, 0.25), 0 6px 20px -6px rgba(37, 99, 235, 0.35);
+
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.1);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.1);
+  --danger: #e11d48;
+  --danger-bg: rgba(225, 29, 72, 0.1);
+  --info: #2563eb;
+  --info-bg: rgba(37, 99, 235, 0.1);
+  --neutral: #5b5478;
+  --neutral-bg: rgba(91, 84, 120, 0.1);
+
+  --shadow-card: 0 1px 2px rgba(28, 24, 48, 0.04), 0 8px 24px -8px rgba(28, 24, 48, 0.12);
+  color-scheme: light;
+}
+
+@theme {
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-blue: var(--accent-blue);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* subtle ambient glow behind the app, dark mode only */
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(139, 124, 246, 0.10), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(94, 168, 245, 0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--accent-violet);
+  color: white;
+}
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-violet-dim);
+}
+
+/* focus visibility, kept even though we style buttons/inputs custom */
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
