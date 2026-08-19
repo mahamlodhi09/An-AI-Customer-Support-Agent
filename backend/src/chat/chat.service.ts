@@ -17,7 +17,8 @@ Important rules you must always follow:
 - Refunds are filed as PENDING and reviewed by a person before any money moves. Never tell a customer their money has already been refunded, or give a specific timeframe like "3-5 business days" — you have no way of actually knowing that.
 - You have real tools to look up orders, search products, file refunds, and create support tickets. Use them yourself rather than telling the customer to contact someone else — that IS what these tools are for.
 - There is no login system, so you don't automatically know who you're talking to. If a tool needs to identify the customer (like creating a support ticket), ask for their account email first.
-- If a customer raises something you can't resolve with order lookup or refunds — a complaint, a general question, anything ambiguous — create a support ticket so a human can follow up, rather than guessing or making promises.`;
+- If a customer raises something you can't resolve with order lookup or refunds — a complaint, a general question, anything ambiguous — create a support ticket so a human can follow up, rather than guessing or making promises.
+- Refunds require verifying the customer's identity by email first, just like support tickets — never file a refund without confirming which account is asking and that they actually own the order.`;
 
 const MAX_TOOL_ROUNDS = 5;
 const MAX_HISTORY_TURNS = 20;
@@ -83,30 +84,47 @@ export class ChatService {
       }
 
       case 'create_refund': {
-        const orderId = args.orderId as number;
-        const amount = args.amount as number;
-        const reason = args.reason as string;
+  const email = args.customerEmail as string;
+  const orderId = args.orderId as number;
+  const amount = args.amount as number;
+  const reason = args.reason as string;
 
-        const order = await this.ordersService.findOne(orderId);
-        if (!order) {
-          return {
-            error: `No order found with ID ${orderId}. Can't file a refund for it.`,
-          };
-        }
+  const customer = await this.customersService.findByEmail(email);
+  if (!customer) {
+    return {
+      error: `No customer account found with email ${email}. Please double-check the email address.`,
+    };
+  }
 
-        const refund = await this.refundsService.create({
-          orderId,
-          amount,
-          reason,
-        });
+  const order = await this.ordersService.findOne(orderId);
+  if (!order) {
+    return { error: `No order found with ID ${orderId}. Can't file a refund for it.` };
+  }
 
-        return {
-          refundId: refund.id,
-          status: refund.status,
-          message:
-            'Refund request filed successfully and is pending review by our team.',
-        };
-      }
+  // Guardrail 1: the order must actually belong to this customer.
+  if (order.customerId !== customer.id) {
+    return {
+      error: `Order #${orderId} does not belong to the account with email ${email}. I can't file a refund for an order that isn't theirs.`,
+    };
+  }
+
+  // Guardrail 2: don't allow duplicate refund requests for the same order.
+  const existingRefunds = await this.refundsService.findByOrder(orderId);
+  const activeRefund = existingRefunds.find((r) => r.status !== 'REJECTED');
+  if (activeRefund) {
+    return {
+      error: `A refund for order #${orderId} already exists (refund #${activeRefund.id}, status: ${activeRefund.status}). I can't file a duplicate request for the same order.`,
+    };
+  }
+
+  const refund = await this.refundsService.create({ orderId, amount, reason });
+
+  return {
+    refundId: refund.id,
+    status: refund.status,
+    message: 'Refund request filed successfully and is pending review by our team.',
+  };
+}
 
       case 'create_support_ticket': {
         const email = args.customerEmail as string;

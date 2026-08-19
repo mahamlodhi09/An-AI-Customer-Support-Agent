@@ -21,6 +21,9 @@ export class RefundsService {
       include: { order: true },
     });
   }
+  findByOrder(orderId: number) {
+  return this.prisma.refund.findMany({ where: { orderId } });
+}
 
   update(id: number, data: UpdateRefundDto) {
     return this.prisma.refund.update({ where: { id }, data });

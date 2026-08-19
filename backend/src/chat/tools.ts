@@ -35,10 +35,14 @@ const searchProducts: FunctionDeclaration = {
 const createRefund: FunctionDeclaration = {
   name: 'create_refund',
   description:
-    "This is how you handle a customer's refund request — call this tool yourself rather than telling the customer to contact someone else. It files a pending refund for a human to review; it does not move any money immediately. Call it as soon as you know the order ID, the refund amount, and the reason.",
+    "This is how you handle a customer's refund request — call this tool yourself rather than telling the customer to contact someone else. It files a pending refund for a human to review; it does not move any money immediately. You must verify the order belongs to the customer's account before filing. Call it once you know the customer's account email, the order ID, the refund amount, and the reason.",
   parameters: {
     type: Type.OBJECT,
     properties: {
+      customerEmail: {
+        type: Type.STRING,
+        description: "The customer's account email address, used to verify they own the order.",
+      },
       orderId: {
         type: Type.NUMBER,
         description: 'The numeric ID of the order being refunded.',
@@ -52,10 +56,9 @@ const createRefund: FunctionDeclaration = {
         description: "The customer's stated reason for the refund.",
       },
     },
-    required: ['orderId', 'amount', 'reason'],
+    required: ['customerEmail', 'orderId', 'amount', 'reason'],
   },
 };
-
 const createSupportTicket: FunctionDeclaration = {
   name: 'create_support_ticket',
   description:
