@@ -7,5 +7,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [SupportTicketsController],
   providers: [SupportTicketsService],
+  exports: [SupportTicketsService],
 })
 export class SupportTicketsModule {}

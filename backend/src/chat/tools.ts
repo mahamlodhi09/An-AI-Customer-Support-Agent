@@ -31,6 +31,7 @@ const searchProducts: FunctionDeclaration = {
     required: ['query'],
   },
 };
+
 const createRefund: FunctionDeclaration = {
   name: 'create_refund',
   description:
@@ -54,6 +55,38 @@ const createRefund: FunctionDeclaration = {
     required: ['orderId', 'amount', 'reason'],
   },
 };
+
+const createSupportTicket: FunctionDeclaration = {
+  name: 'create_support_ticket',
+  description:
+    "Escalate an issue to a human by creating a support ticket. Use this for complaints, general questions, or anything you can't resolve with your other tools (e.g. rude delivery staff, a policy question, something ambiguous). You need the customer's account email to find their record — ask for it if you don't already have it.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      customerEmail: {
+        type: Type.STRING,
+        description: "The customer's account email address.",
+      },
+      orderId: {
+        type: Type.NUMBER,
+        description: 'Optional. The order this ticket relates to, if any.',
+      },
+      message: {
+        type: Type.STRING,
+        description: "A clear summary of the customer's issue or question.",
+      },
+    },
+    required: ['customerEmail', 'message'],
+  },
+};
+
 export const tools = [
-  { functionDeclarations: [getOrderStatus, searchProducts] },
+  {
+    functionDeclarations: [
+      getOrderStatus,
+      searchProducts,
+      createRefund,
+      createSupportTicket,
+    ],
+  },
 ];

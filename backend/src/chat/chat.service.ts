@@ -3,6 +3,8 @@ import { GoogleGenAI } from '@google/genai';
 import { OrdersService } from '../orders/orders.service';
 import { ProductsService } from '../products/products.service';
 import { RefundsService } from '../refunds/refunds.service';
+import { CustomersService } from '../customers/customers.service';
+import { SupportTicketsService } from '../support-tickets/support-tickets.service';
 import { tools } from './tools';
 
 const MODEL = 'gemini-3.5-flash-lite';
@@ -10,10 +12,12 @@ const MODEL = 'gemini-3.5-flash-lite';
 const SYSTEM_INSTRUCTION = `You are a friendly customer support agent for an online store.
 
 Important rules you must always follow:
-- Never claim you have completed an action (like filing a refund) unless you actually called the matching tool and it returned success. If you have not called a tool, the action has not happened — do not describe it as done.
+- Never claim you have completed an action (like filing a refund or creating a ticket) unless you actually called the matching tool and it returned success. If you have not called a tool, the action has not happened — do not describe it as done.
 - If you're missing information needed to call a tool (for example, a refund amount), ask the customer, or use a previous tool result to work it out yourself. Never guess or invent a number.
 - Refunds are filed as PENDING and reviewed by a person before any money moves. Never tell a customer their money has already been refunded, or give a specific timeframe like "3-5 business days" — you have no way of actually knowing that.
-- You have real tools to look up orders, search products, and file refunds. When a customer wants a refund and you know the order ID, amount, and reason, actually call the create_refund tool yourself — don't tell them to contact another team, since filing the request IS something you can do.`;
+- You have real tools to look up orders, search products, file refunds, and create support tickets. Use them yourself rather than telling the customer to contact someone else — that IS what these tools are for.
+- There is no login system, so you don't automatically know who you're talking to. If a tool needs to identify the customer (like creating a support ticket), ask for their account email first.
+- If a customer raises something you can't resolve with order lookup or refunds — a complaint, a general question, anything ambiguous — create a support ticket so a human can follow up, rather than guessing or making promises.`;
 
 const MAX_TOOL_ROUNDS = 5;
 const MAX_HISTORY_TURNS = 20;
@@ -31,6 +35,8 @@ export class ChatService {
     private readonly ordersService: OrdersService,
     private readonly productsService: ProductsService,
     private readonly refundsService: RefundsService,
+    private readonly customersService: CustomersService,
+    private readonly supportTicketsService: SupportTicketsService,
   ) {}
 
   private async executeTool(name: string, args: Record<string, unknown>) {
@@ -99,6 +105,40 @@ export class ChatService {
           status: refund.status,
           message:
             'Refund request filed successfully and is pending review by our team.',
+        };
+      }
+
+      case 'create_support_ticket': {
+        const email = args.customerEmail as string;
+        const message = args.message as string;
+        const orderId = args.orderId as number | undefined;
+
+        const customer = await this.customersService.findByEmail(email);
+        if (!customer) {
+          return {
+            error: `No customer account found with email ${email}. Please double-check the email address.`,
+          };
+        }
+
+        if (orderId) {
+          const order = await this.ordersService.findOne(orderId);
+          if (!order) {
+            return {
+              error: `No order found with ID ${orderId}. The ticket wasn't created — please confirm the order number.`,
+            };
+          }
+        }
+
+        const ticket = await this.supportTicketsService.create({
+          customerId: customer.id,
+          orderId,
+          message,
+        });
+
+        return {
+          ticketId: ticket.id,
+          status: ticket.status,
+          message: 'Support ticket created and will be reviewed by our team.',
         };
       }
 

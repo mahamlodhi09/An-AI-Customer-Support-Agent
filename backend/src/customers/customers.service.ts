@@ -23,6 +23,9 @@ export class CustomersService {
   update(id: number, data: UpdateCustomerDto) {
     return this.prisma.customer.update({ where: { id }, data });
   }
+  findByEmail(email: string) {
+  return this.prisma.customer.findUnique({ where: { email } });
+}
 
   async remove(id: number) {
     try {
